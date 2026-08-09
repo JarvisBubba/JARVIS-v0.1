@@ -16,21 +16,20 @@ body{
   min-height:100vh; background:var(--bg); color:var(--text);
   font-family:"Rajdhani",sans-serif; font-size:17px; overflow-x:hidden;
 }
-body::before{ /* grid */
+body::before{ 
   content:""; position:fixed; inset:0; pointer-events:none;
   background:
     linear-gradient(rgba(63,224,255,.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(63,224,255,.045) 1px, transparent 1px);
   background-size:44px 44px;
 }
-body::after{ /* scanline */
+body::after{ 
   content:""; position:fixed; left:0; right:0; height:120px; top:-120px; pointer-events:none;
   background:linear-gradient(180deg, transparent, rgba(63,224,255,.06), transparent);
   animation:scan 7s linear infinite;
 }
 @keyframes scan{to{top:110vh}}
 
-/* ---- STARK PROTOCOL recolor (easter egg) ---- */
 body.stark{ --bg:#140b03; --panel:#1d1206; --line:#5e3a12; --cyan:#ffc24d; --cyan-dim:#b06a1c; }
 body.stark header h1{ text-shadow:0 0 18px rgba(255,194,77,.8); }
 
@@ -60,7 +59,6 @@ main{display:grid; grid-template-columns:340px 1fr; gap:22px; padding:22px 28px;
   color:var(--cyan-dim); margin-bottom:16px}
 .panel h2.sub{margin-top:20px; border-top:1px solid var(--line); padding-top:14px}
 
-/* ---- arc reactor ---- */
 .orb{width:200px; height:200px; margin:6px auto 18px; position:relative}
 .orb .ring{position:absolute; border-radius:50%; border:1px solid var(--cyan-dim)}
 .r1{inset:0; border-color:rgba(63,224,255,.35)}
@@ -94,7 +92,6 @@ main{display:grid; grid-template-columns:340px 1fr; gap:22px; padding:22px 28px;
 .wave span:nth-child(4){animation-delay:.05s}.wave span:nth-child(5){animation-delay:.15s}
 @keyframes eq{from{height:5px}to{height:24px}}
 
-/* ---- console ---- */
 #log{height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-right:6px}
 .msg{max-width:85%; padding:9px 14px; border:1px solid var(--line); line-height:1.35}
 .msg code{background:rgba(63,224,255,.12); padding:0 5px}
@@ -121,7 +118,6 @@ button:hover{background:var(--cyan); color:#04101c}
 .chip{font-family:"Rajdhani"; font-size:.85rem; letter-spacing:.05em; padding:4px 12px;
   border:1px solid var(--line); color:var(--cyan-dim); cursor:pointer; text-transform:none; min-height:0}
 
-/* ---- settings modal ---- */
 #overlay{position:fixed; inset:0; background:rgba(3,10,18,.82); backdrop-filter:blur(3px);
   display:flex; align-items:center; justify-content:center; z-index:50; padding:20px}
 #overlay[hidden]{display:none}
@@ -197,18 +193,14 @@ button:hover{background:var(--cyan); color:#04101c}
     </label>
     <label class="row"><input type="checkbox" id="s-voice"> Voice replies</label>
 
-    <h2 class="sub">SETTINGS — LLM UPLINK (OPTIONAL)</h2>
-    <label>API base URL <input type="text" id="s-base" placeholder="https://api.openai.com/v1"></label>
-    <label>API key
+    <h2 class="sub">SETTINGS — GEMINI UPLINK (OPTIONAL)</h2>
+    <label>Gemini API Key
       <span class="keyrow">
-        <input type="password" id="s-key" placeholder="sk-… (or blank for local servers)">
+        <input type="password" id="s-key" placeholder="AIza... (get free at aistudio.google.com)">
         <button type="button" id="s-eye">SHOW</button>
       </span>
     </label>
-    <label>Model <input type="text" id="s-model" placeholder="gpt-4o-mini"></label>
-    <div class="hint">Stored only in this browser (localStorage) and sent only to the endpoint above.
-      Works with OpenAI, OpenRouter, Groq — or a local server such as LM Studio / Ollama
-      (enable CORS there). Any question I can't handle becomes an uplink call.</div>
+    <div class="hint">Stored only in this browser. Get a free key at <b>aistudio.google.com</b> (Get API Key). Any question I can't handle natively will be sent to Google's Gemini.</div>
     <div id="s-status"></div>
     <div class="btnrow">
       <button type="button" id="s-test">TEST</button>
@@ -225,8 +217,7 @@ const orb = $("#orb"), stateEl = $("#state"), log = $("#log");
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 /* ================= settings & personas ================= */
-const DEFAULTS = { name:"J.A.R.V.I.S.", userName:"", personality:"butler", voice:true,
-                   apiBase:"https://api.openai.com/v1", apiKey:"", model:"gpt-4o-mini" };
+const DEFAULTS = { name:"J.A.R.V.I.S.", userName:"", personality:"butler", voice:true, geminiKey:"" };
 let S = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("jarvis.settings")||"{}") };
 const saveSettings = () => localStorage.setItem("jarvis.settings", JSON.stringify(S));
 
@@ -270,7 +261,7 @@ const P = () => PERSONAS[S.personality] || PERSONAS.butler;
 function applyIdentity(){
   $("#title").textContent = S.name.toUpperCase();
   document.title = S.name;
-  $("#uplink").textContent = S.apiBase ? "ARMED" : "OFFLINE";
+  $("#uplink").textContent = S.geminiKey ? "ARMED" : "OFFLINE";
 }
 
 /* ================= jokes / sites / help ================= */
@@ -341,22 +332,26 @@ function logMsg(who, text){
   log.appendChild(d); log.scrollTop = log.scrollHeight;
 }
 
-/* ================= LLM uplink ================= */
+/* ================= GEMINI UPLINK ================= */
 async function llm(q){
-  const headers = {"Content-Type":"application/json"};
-  if(S.apiKey) headers["Authorization"] = "Bearer "+S.apiKey;
-  const r = await fetch(S.apiBase.replace(/\/+$/,"")+"/chat/completions",{
-    method:"POST", headers,
-    body: JSON.stringify({ model: S.model || "gpt-4o-mini",
-      messages:[
-        {role:"system", content:`You are ${S.name}, a ${S.personality}-flavored assistant. `+
-          `Address the user as "${P().addr()}". Be concise: under 120 words, light markdown ok.`},
-        {role:"user", content:q}],
-      max_tokens: 400 })
+  const systemPrompt = `You are ${S.name}, a ${S.personality}-flavored assistant. Address the user as "${P().addr()}". Be concise: under 120 words.`;
+  const fullPrompt = `${systemPrompt}\n\nUser: ${q}`;
+  
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${S.geminiKey}`;
+  
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: fullPrompt }] }],
+      generationConfig: { maxOutputTokens: 400, temperature: 0.7 }
+    })
   });
+  
   if(!r.ok) throw new Error("HTTP "+r.status);
   const d = await r.json();
-  return d.choices[0].message.content;
+  if(d.candidates && d.candidates[0]) return d.candidates[0].content.parts[0].text;
+  throw new Error("Empty response");
 }
 
 /* ================= brain ================= */
@@ -453,8 +448,8 @@ async function route(raw){
   }
   if(low==="clear notes"){ store.notes=[]; store.rems=[]; return "Memory wiped."; }
 
-  /* --- no protocol matched: try the LLM uplink --- */
-  if(S.apiBase){
+  /* --- no protocol matched: try the Gemini uplink --- */
+  if(S.geminiKey){
     stateEl.textContent = "UPLINK…";
     try{ return await llm(t); }
     catch(e){ return pick(P().unknown)+" (Uplink failed: "+e.message+" — check Settings.)"; }
@@ -491,7 +486,7 @@ function starkMode(){
 const KONAMI=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
 let kIdx=0;
 addEventListener("keydown",e=>{
-  if(e.target.closest("input,select")) return;           // don't hijack typing
+  if(e.target.closest("input,select")) return;           
   const k = e.key.length===1 ? e.key.toLowerCase() : e.key;
   if(k===KONAMI[kIdx]){ kIdx++; if(kIdx===KONAMI.length){ kIdx=0; starkMode(); } }
   else kIdx = (k===KONAMI[0]) ? 1 : 0;
@@ -502,7 +497,7 @@ const overlay = $("#overlay");
 function openSettings(){
   $("#s-name").value=S.name; $("#s-user").value=S.userName;
   $("#s-persona").value=S.personality; $("#s-voice").checked=S.voice;
-  $("#s-base").value=S.apiBase; $("#s-key").value=S.apiKey; $("#s-model").value=S.model;
+  $("#s-key").value=S.geminiKey; 
   $("#s-status").textContent=""; overlay.hidden=false;
 }
 function closeSettings(){ overlay.hidden=true; }
@@ -521,9 +516,7 @@ $("#s-save").onclick=()=>{
   S.userName=$("#s-user").value.trim();
   S.personality=$("#s-persona").value;
   S.voice=$("#s-voice").checked;
-  S.apiBase=$("#s-base").value.trim();
-  S.apiKey=$("#s-key").value.trim();
-  S.model=$("#s-model").value.trim()||"gpt-4o-mini";
+  S.geminiKey=$("#s-key").value.trim();
   saveSettings(); applyIdentity(); closeSettings();
   logMsg("jarvis","Settings saved. "+pick(P().greet));
   speak("Settings saved.");
@@ -531,22 +524,23 @@ $("#s-save").onclick=()=>{
 
 $("#s-test").onclick=async()=>{
   const st=$("#s-status"); st.style.color="var(--cyan)";
-  st.textContent="Contacting endpoint…";
-  const base=$("#s-base").value.trim();
+  st.textContent="Contacting Google Gemini…";
   const key=$("#s-key").value.trim();
-  const model=$("#s-model").value.trim()||"gpt-4o-mini";
-  if(!base){ st.style.color="var(--red)"; st.textContent="✘ No base URL set."; return; }
+  if(!key){ st.style.color="var(--red)"; st.textContent="✘ No API key provided."; return; }
   try{
-    const headers={"Content-Type":"application/json"};
-    if(key) headers["Authorization"]="Bearer "+key;
-    const r=await fetch(base.replace(/\/+$/,"")+"/chat/completions",{
-      method:"POST", headers,
-      body:JSON.stringify({model, messages:[{role:"user",content:"ping"}], max_tokens:5})});
-    if(r.ok){ st.style.color="var(--cyan)"; st.textContent="✔ Uplink confirmed. I can hear them fine."; }
-    else{ st.style.color="var(--red)"; st.textContent="✘ Endpoint answered HTTP "+r.status+" — check key/model."; }
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+    const r=await fetch(url,{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({contents:[{parts:[{text:"ping"}]}]})
+    });
+    if(r.ok){ st.style.color="var(--cyan)"; st.textContent="✔ Uplink confirmed. Gemini is online."; }
+    else{ 
+      const err = await r.json();
+      st.style.color="var(--red)"; st.textContent="✘ Gemini rejected the key. Check your API key. ("+(err.error?.message || r.status)+")"; 
+    }
   }catch{
     st.style.color="var(--red)";
-    st.textContent="✘ No response — check the URL, the server, and its CORS settings.";
+    st.textContent="✘ Network error reaching Google servers.";
   }
 };
 
@@ -579,7 +573,7 @@ setInterval(()=>{
 
 applyIdentity();
 logMsg("jarvis", `${S.name} ${P().boot}`);
-speechSynthesis.getVoices(); // warm up voices
+speechSynthesis.getVoices(); 
 </script>
 </body>
 </html>
