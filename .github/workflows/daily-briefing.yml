@@ -1,0 +1,25 @@
+name: Daily Briefing
+
+on:
+  schedule:
+    - cron: "0 7 * * *"      # 07:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Compile and post briefing
+        run: python bot/briefing.py
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          JARVIS_CITY: ${{ vars.JARVIS_CITY }}   # repo variable, e.g. "Tokyo"
