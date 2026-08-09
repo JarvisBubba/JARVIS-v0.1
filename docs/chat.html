@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S. — Comms</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#05101d; --panel:#07182a; --line:#123c5e; --cyan:#3fe0ff; --cyan-dim:#1a7f99;
+       --amber:#ffb54d; --red:#ff5d5d; --text:#cfeaf5; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Rajdhani",sans-serif;font-size:17px;height:100vh;overflow:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(63,224,255,.04) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(63,224,255,.04) 1px,transparent 1px);
+  background-size:44px 44px}
+button{font-family:"Orbitron";font-size:.62rem;letter-spacing:.2em;cursor:pointer;background:transparent;
+  border:1px solid var(--cyan);color:var(--cyan);padding:9px 16px;transition:.15s}
+button:hover{background:var(--cyan);color:#04101c}
+input{background:#04101c;border:1px solid var(--line);color:var(--text);padding:11px 14px;
+  font-family:"Rajdhani";font-size:1.05rem;outline:none}
+input:focus{border-color:var(--cyan)}
+.panel{background:var(--panel);border:1px solid var(--line);padding:26px;
+  clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;padding:20px;overflow:auto}
+.overlay[hidden]{display:none}
+.overlay .panel{width:480px;max-width:100%}
+.overlay h1{font-family:"Orbitron";letter-spacing:.3em;color:var(--cyan);font-size:1.3rem;margin-bottom:6px}
+.overlay h2{font-family:"Orbitron";font-size:.65rem;letter-spacing:.3em;color:var(--cyan-dim);margin-bottom:20px}
+.overlay ol{margin:14px 0 14px 20px;line-height:1.7}
+.overlay code{background:rgba(63,224,255,.12);padding:1px 6px}
+#gate input{width:100%;margin-bottom:12px}
+
+#app{display:grid;grid-template-columns:272px 1fr;height:100vh}
+#app[hidden]{display:none}
+aside{border-right:1px solid var(--line);background:var(--panel);padding:16px;overflow-y:auto}
+.main-chat{display:flex;flex-direction:column;height:100vh;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line)}
+.topbar .rt{font-family:"Orbitron";font-size:.85rem;letter-spacing:.2em;color:var(--cyan)}
+.topbar .rm{font-size:.8rem;color:var(--cyan-dim)}
+.topbar a{color:var(--cyan-dim);font-size:.8rem;text-decoration:none;letter-spacing:.1em}
+.topbar a:hover{color:var(--cyan)}
+
+#me{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+#me .av{width:34px;height:34px;font-size:.85rem}
+#me .nm{font-weight:600}
+#me .id{font-size:.72rem;color:var(--cyan-dim)}
+h3.section{font-family:"Orbitron";font-size:.58rem;letter-spacing:.3em;color:var(--cyan-dim);margin:16px 0 8px}
+.room{padding:8px 10px;border:1px solid transparent;cursor:pointer;margin-bottom:2px}
+.room:hover{border-color:var(--line)}
+.room.active{border-color:var(--cyan);background:rgba(63,224,255,.06)}
+.room .nm{font-weight:600;display:flex;justify-content:space-between}
+.room .tg{font-size:.6rem;font-family:"Orbitron";color:var(--cyan-dim);letter-spacing:.15em}
+.room .pv{font-size:.82rem;color:var(--cyan-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.user{display:flex;align-items:center;gap:9px;padding:6px 8px;cursor:pointer}
+.user:hover{background:rgba(63,224,255,.05)}
+.dot{width:8px;height:8px;border-radius:50%;background:#3a4a5a;flex:none}
+.dot.on{background:#7ee787;box-shadow:0 0 6px #7ee787}
+
+#messages{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.m{display:flex;gap:9px;max-width:76%}
+.m.me{align-self:flex-end;flex-direction:row-reverse}
+.av{width:28px;height:28px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:"Orbitron";font-size:.68rem;color:#04101c;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.bub{border:1px solid var(--line);padding:7px 12px;background:rgba(63,224,255,.04);
+  overflow-wrap:anywhere;white-space:pre-wrap}
+.m.me .bub{border-color:rgba(255,181,77,.45);background:rgba(255,181,77,.05)}
+.m.jarvis .bub{border-color:var(--cyan);box-shadow:0 0 14px rgba(63,224,255,.28)}
+.mh{font-size:.72rem;color:var(--cyan-dim);letter-spacing:.08em;margin-bottom:2px;font-family:"Orbitron"}
+.m.me .mh{color:var(--amber);text-align:right}
+#empty{margin:auto;color:var(--cyan-dim);font-family:"Orbitron";font-size:.65rem;letter-spacing:.25em;text-align:center;line-height:2}
+
+form{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line)}
+form input{flex:1}
+@media(max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:auto 1fr}aside{max-height:38vh}}
+</style>
+</head>
+<body>
+
+<!-- shown when firebase-config.js is still a placeholder -->
+<div class="overlay" id="setup" hidden>
+  <div class="panel">
+    <h1>COMMS ARRAY</h1><h2>UPLINK NOT CONFIGURED</h2>
+    <ol>
+      <li>Create a free project at <code>console.firebase.google.com</code></li>
+      <li>Authentication → Sign-in method → enable <b>Anonymous</b></li>
+      <li>Firestore Database → <b>Create database</b> (production mode)</li>
+      <li>Project settings → Your apps → add a <b>Web app</b>, copy the config</li>
+      <li>Paste it into <code>docs/firebase-config.js</code></li>
+      <li>Firestore → Rules → paste <code>firestore.rules</code> from the repo → Publish</li>
+    </ol>
+    Then reload this page. <br><br><a href="index.html" style="color:var(--cyan)">◄ back to the HUD</a>
+  </div>
+</div>
+
+<!-- name gate -->
+<div class="overlay" id="gate" hidden>
+  <div class="panel">
+    <h1>COMMS ARRAY</h1><h2>IDENTIFY YOURSELF</h2>
+    <input type="text" id="gate-name" maxlength="20" placeholder="callsign / display name">
+    <button id="gate-go" style="width:100%">ENTER THE GRID</button>
+    <div style="margin-top:14px;font-size:.82rem;color:var(--cyan-dim)">
+      Identity is stored per-browser via anonymous auth. Pick a name, tell your friends to open this page and do the same.</div>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <aside>
+    <div id="me"></div>
+    <button id="newroom" style="width:100%;margin-top:14px">+ NEW CHANNEL</button>
+    <h3 class="section">CHANNELS</h3>
+    <div id="rooms"></div>
+    <h3 class="section">OPERATIVES — click to DM</h3>
+    <div id="users"></div>
+  </aside>
+
+  <div class="main-chat">
+    <div class="topbar">
+      <div><span class="rt" id="room-title">NO CHANNEL</span> <span class="rm" id="room-meta"></span></div>
+      <a href="index.html">◄ HUD</a>
+    </div>
+    <div id="messages"><div id="empty">SELECT OR CREATE A CHANNEL<br>— OR DM AN OPERATIVE —</div></div>
+    <form id="form">
+      <input type="text" id="input" maxlength="900" placeholder="Message…  (@jarvis works in here too)" autocomplete="off">
+      <button type="submit">SEND</button>
+    </form>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, query, orderBy,
+         limit, onSnapshot, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const $ = s => document.querySelector(s);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const PALETTE = ["#3fe0ff","#ffb54d","#7ee787","#ff8fd3","#b49bff","#ffd166","#6ee7f0","#ff9d7a"];
+const colorFor = id => PALETTE[[...id].reduce((a,c)=>a+c.charCodeAt(0),0) % PALETTE.length];
+
+let db, uid, myName, entered=false, currentRoomId=null, unsubMsg=null, usersCache={}, lastCount=0;
+
+/* ================= boot ================= */
+const cfg = window.FIREBASE_CONFIG;
+if(!cfg || String(cfg.apiKey).includes("PASTE")){ $("#setup").hidden=false; }
+else boot();
+
+async function boot(){
+  const app = initializeApp(cfg);
+  const auth = getAuth(app);
+  db = getFirestore(app);
+  const saved = localStorage.getItem("jarvis.chat.name");
+  if(saved){ $("#gate-name").value=saved; signInAnonymously(auth); }
+  else $("#gate").hidden=false;
+
+  $("#gate-go").onclick = async ()=>{
+    const n=$("#gate-name").value.trim();
+    if(!n) return;
+    localStorage.setItem("jarvis.chat.name", n);
+    try{ await signInAnonymously(auth); }
+    catch(e){ alert("Auth failed — did you enable Anonymous sign-in in Firebase? "+e.message); }
+  };
+  $("#gate-name").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#gate-go").click(); });
+
+  onAuthStateChanged(auth, user=>{ if(user) enterApp(user); });
+}
+
+async function enterApp(user){
+  if(entered) return; entered=true;
+  uid=user.uid; myName=localStorage.getItem("jarvis.chat.name")||"operative";
+  await setDoc(doc(db,"users",uid),{name:myName,uid,lastSeen:serverTimestamp()},{merge:true});
+  $("#gate").hidden=true; $("#app").hidden=false;
+  $("#me").innerHTML="";
+  const av=document.createElement("div"); av.className="av"; av.style.background=colorFor(uid); av.textContent=myName[0].toUpperCase();
+  const info=document.createElement("div");
+  info.innerHTML=`<div class="nm"></div><div class="id">id: ${uid.slice(0,8)}…</div>`;
+  info.querySelector(".nm").textContent=myName;
+  $("#me").append(av,info);
+
+  onSnapshot(query(collection(db,"users"),limit(200)), renderUsers);
+  onSnapshot(query(collection(db,"rooms"),orderBy("lastAt","desc"),limit(50)), renderRooms);
+  setInterval(()=>{ if(uid) setDoc(doc(db,"users",uid),{lastSeen:serverTimestamp()},{merge:true}); },30000);
+}
+
+/* ================= sidebar ================= */
+function renderUsers(snap){
+  usersCache={};
+  const box=$("#users"); box.innerHTML="";
+  const list=[];
+  snap.forEach(d=>{ const u=d.data(); usersCache[d.id]=u; if(d.id!==uid) list.push({id:d.id,...u}); });
+  list.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  if(!list.length) box.innerHTML='<div style="color:var(--cyan-dim);font-size:.85rem">No one else is on the grid yet. Share the page URL.</div>';
+  list.forEach(u=>{
+    const el=document.createElement("div"); el.className="user";
+    const on = u.lastSeen && (Date.now()-u.lastSeen.toDate()) < 90000;
+    const dot=document.createElement("span"); dot.className="dot"+(on?" on":"");
+    const av=document.createElement("div"); av.className="av"; av.style.background=colorFor(u.id);
+    av.style.width="24px"; av.style.height="24px"; av.style.fontSize=".6rem"; av.textContent=(u.name||"?")[0].toUpperCase();
+    const nm=document.createElement("span"); nm.textContent=u.name||"anon";
+    el.append(dot,av,nm); el.onclick=()=>startDm(u); box.appendChild(el);
+  });
+}
+
+function roomLabel(r){
+  if(r.type==="dm"){ const other=(r.members||[]).find(m=>m!==uid); return usersCache[other]?.name||"direct link"; }
+  return r.name||"channel";
+}
+
+function renderRooms(snap){
+  const box=$("#rooms"); box.innerHTML="";
+  const mine=[], discover=[];
+  snap.forEach(d=>{ const r=d.data(); r.id=d.id; (r.members||[]).includes(uid)?mine.push(r):discover.push(r); });
+  const mk=(r,joined)=>{
+    const el=document.createElement("div");
+    el.className="room"+(r.id===currentRoomId?" active":"");
+    const nm=document.createElement("div"); nm.className="nm";
+    const lbl=document.createElement("span"); lbl.textContent=roomLabel(r);
+    const tg=document.createElement("span"); tg.className="tg";
+    tg.textContent=r.type==="dm"?"1:1":(joined?"GROUP":"JOIN +");
+    nm.append(lbl,tg);
+    const pv=document.createElement("div"); pv.className="pv"; pv.textContent=r.lastMsg||"";
+    el.append(nm,pv);
+    el.onclick=()=> joined?openRoom(r):joinAndOpen(r);
+    box.appendChild(el);
+  };
+  mine.forEach(r=>mk(r,true));
+  discover.filter(r=>r.type==="group").forEach(r=>mk(r,false));
+}
+
+/* ================= rooms ================= */
+function openRoom(r){
+  currentRoomId=r.id;
+  $("#room-title").textContent=roomLabel(r).toUpperCase();
+  $("#room-meta").textContent = r.type==="dm" ? "· encrypted-ish direct line" : `· ${(r.members||[]).length} member(s)`;
+  if(unsubMsg) unsubMsg();
+  lastCount=0;
+  unsubMsg=onSnapshot(
+    query(collection(db,"rooms",r.id,"messages"),orderBy("at","asc"),limit(200)),
+    renderMessages);
+  document.querySelectorAll(".room").forEach(el=>el.classList.remove("active"));
+}
+
+async function joinAndOpen(r){
+  await updateDoc(doc(db,"rooms",r.id),{members:arrayUnion(uid)});
+  openRoom({...r,members:[...(r.members||[]),uid]});
+}
+
+$("#newroom").onclick=async ()=>{
+  const name=prompt("Channel name:");
+  if(!name||!name.trim()) return;
+  const ref=await addDoc(collection(db,"rooms"),{
+    type:"group",name:name.trim().slice(0,40),members:[uid],createdBy:uid,
+    createdAt:serverTimestamp(),lastMsg:"channel opened",lastAt:serverTimestamp()});
+  openRoom({id:ref.id,type:"group",name:name.trim(),members:[uid]});
+};
+
+async function startDm(u){
+  const id="dm_"+[uid,u.id].sort().join("_");
+  const ref=doc(db,"rooms",id);
+  const ex=await getDoc(ref);
+  if(!ex.exists()) await setDoc(ref,{type:"dm",name:"direct link",members:[uid,u.id],
+    createdBy:uid,lastMsg:"channel opened",lastAt:serverTimestamp()});
+  openRoom({id,type:"dm",members:[uid,u.id]});
+}
+
+/* ================= messages ================= */
+const fmtTime = ts => ts?.toDate ? ts.toDate().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "…";
+
+function renderMessages(snap){
+  const box=$("#messages"); box.innerHTML="";
+  snap.forEach(d=>{
+    const m=d.data();
+    const row=document.createElement("div");
+    row.className="m "+(m.jarvis?"jarvis":m.author===uid?"me":"them");
+    if(!m.jarvis){
+      const av=document.createElement("div"); av.className="av";
+      av.style.background=colorFor(m.author||"?"); av.textContent=(m.authorName||"?")[0].toUpperCase();
+      row.appendChild(av);
+    } else {
+      const av=document.createElement("div"); av.className="av";
+      av.style.background="var(--cyan)"; av.textContent="J"; row.appendChild(av);
+    }
+    const bub=document.createElement("div"); bub.className="bub";
+    const head=document.createElement("div"); head.className="mh";
+    head.textContent=(m.jarvis?"J.A.R.V.I.S.":(m.authorName||"anon"))+" · "+fmtTime(m.at);
+    const body=document.createElement("div"); body.textContent=m.text;
+    bub.append(head,body); row.appendChild(bub); box.appendChild(row);
+  });
+  box.scrollTop=box.scrollHeight;
+  if(snap.size>lastCount && document.hidden){ beep(); document.title="💬 new message — J.A.R.V.I.S."; }
+  lastCount=snap.size;
+}
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) document.title="J.A.R.V.I.S. — Comms"; });
+
+function beep(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)();
+  const o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination);
+  o.frequency.value=880; g.gain.value=.04; o.start(); o.stop(c.currentTime+.08); }catch{} }
+
+$("#form").onsubmit=async e=>{
+  e.preventDefault();
+  const text=$("#input").value.trim();
+  if(!text||!currentRoomId) return;
+  $("#input").value="";
+  const roomId=currentRoomId;
+  await addDoc(collection(db,"rooms",roomId,"messages"),
+    {text,author:uid,authorName:myName,jarvis:false,at:serverTimestamp()});
+  await updateDoc(doc(db,"rooms",roomId),{lastMsg:text.slice(0,80),lastAt:serverTimestamp()});
+  if(/^@jarvis\b/i.test(text)) jarvisRespond(roomId,text);   // my own browser answers — no bot races
+};
+
+/* ================= JARVIS in the room ================= */
+const JOKES=["I would tell you a UDP joke, but you might not get it.",
+ "There are 10 kinds of people: those who understand binary, and those who don't.",
+ "Why did the developer go broke? He used up all his cache."];
+const QUOTES=["Sometimes you have to run before you can walk.",
+ "The best way to predict the future is to invent it.",
+ "First, solve the problem. Then, write the code."];
+
+async function jarvisRespond(roomId,text){
+  const reply=await jarvisBrain(text);
+  await addDoc(collection(db,"rooms",roomId,"messages"),
+    {text:reply,author:"JARVIS",authorName:"J.A.R.V.I.S.",jarvis:true,at:serverTimestamp()});
+  await updateDoc(doc(db,"rooms",roomId),{lastMsg:reply.slice(0,80),lastAt:serverTimestamp()});
+}
+
+async function jarvisBrain(raw){
+  const q=raw.replace(/^@jarvis\b/i,"").trim(); const low=q.toLowerCase();
+  const HELP="@jarvis protocols: time · date · weather in <city> · wiki <topic> · calc 2^10 · joke · quote · flip a coin · roll 2d6";
+  if(!low||low==="help") return HELP;
+  if(/^(hi|hello|hey)\b/.test(low)) return pick(["At your service.","Yes? I'm in the room.","Listening."]);
+  if(low.includes("time")) return "🕐 "+new Date().toLocaleTimeString();
+  if(low.includes("date")) return "📅 "+new Date().toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  if(low.includes("joke")) return "😏 "+pick(JOKES);
+  if(low.includes("quote")) return "💬 "+pick(QUOTES);
+  if(low.includes("coin")) return "🪙 "+(Math.random()<.5?"Heads.":"Tails.");
+  let m=low.match(/roll\s+(\d*)d(\d+)/);
+  if(m){ const n=Math.min(parseInt(m[1]||1),50),s=parseInt(m[2]);
+    const r=Array.from({length:n},()=>1+Math.floor(Math.random()*s));
+    return `🎲 ${r.join(", ")} — total ${r.reduce((a,b)=>a+b,0)}.`; }
+  if(low.startsWith("calc ")){ const e=q.slice(5).replaceAll("^","**");
+    if(/^[0-9+\-*/().%\s]+$/.test(e)){ try{ return "🧮 "+Function('"use strict";return('+e+')')(); }catch{} }
+    return "That expression does not parse."; }
+  if(low.startsWith("weather")){ const city=low.replace(/^weather\s*(in|for)?\s*/,"");
+    try{ const g=await(await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(city)+"&count=1")).json();
+      if(!g.results?.length) return "I can't locate '"+city+"'.";
+      const f=await(await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.results[0].latitude}&longitude=${g.results[0].longitude}&current_weather=true`)).json();
+      return `🌤 ${g.results[0].name}: ${f.current_weather.temperature}°C, wind ${f.current_weather.windspeed} km/h.`;
+    }catch{ return "Weather uplink failed."; } }
+  m=low.match(/^(?:who|what) (?:is|are|was) (.+)/)||
+    (low.startsWith("wiki ")?[null,null,q.slice(5)]:null);
+  if(m){ const topic=m[2]||m[1];
+    try{ const d=await(await fetch("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&redirects=1&origin=*&titles="+encodeURIComponent(topic))).json();
+      const p=Object.values(d.query.pages)[0];
+      return p.missing!==undefined?"Nothing on '"+topic+"' in my archives.":"📚 "+p.title+": "+p.extract.slice(0,350);
+    }catch{ return "Archive uplink failed."; } }
+  /* LLM uplink fallback — uses Gemini key from Settings on the HUD page */
+  const S=JSON.parse(localStorage.getItem("jarvis.settings")||"{}");
+  if(S.geminiKey){ try{
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${S.geminiKey}`;
+    const r=await fetch(url,{method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        contents:[{parts:[{text:"You are JARVIS in a group chat. Be concise (under 80 words).\n\nUser: "+q}]}]
+      })});
+    if(r.ok) {
+       const d = await r.json();
+       if(d.candidates && d.candidates[0]) return d.candidates[0].content.parts[0].text;
+    }
+  }catch{} }
+        {role:"system",content:"You are JARVIS, a witty assistant in a group chat. Under 100 words."},
+        {role:"user",content:q}],max_tokens:300})});
+    if(r.ok) return (await r.json()).choices[0].message.content;
+  }catch{} }
+  return "I don't have a protocol for that — try '@jarvis help'.";
+}
+</script>
+</body>
+</html>
