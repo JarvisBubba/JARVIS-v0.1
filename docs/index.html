@@ -351,29 +351,6 @@ logMsg("jarvis","Jarvis online. Voice recognition armed — press the mic, or ty
 speechSynthesis.getVoices(); // warm up voices
 </script>
   <!-- ▼▼ PEOPLE CHAT BUTTON — paste right before </body> ▼▼ -->
-<script>
-(function () {
-  var btn = document.createElement("a");
-  btn.href = "chat.html";
-  btn.textContent = "💬 PEOPLE CHAT";
-  btn.style.cssText = [
-    "position:fixed",
-    "top:52px",
-    "right:18px",
-    "z-index:99999",
-    "padding:8px 16px",
-    "border:1px solid #35c8f0",
-    "background:rgba(7,13,23,0.92)",
-    "color:#35c8f0",
-    "font-size:11px",
-    "letter-spacing:2px",
-    "text-transform:uppercase",
-    "text-decoration:none",
-    "cursor:pointer",
-    "box-shadow:0 0 14px rgba(53,200,240,.35)"
-  ].join(";");
-  document.body.appendChild(btn);
-})();
-</script>
+<a href="chat.html" style="position:fixed;top:52px;right:18px;z-index:99999;padding:8px 16px;border:1px solid #35c8f0;background:rgba(7,13,23,0.92);color:#35c8f0;font-size:11px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;cursor:pointer;box-shadow:0 0 14px rgba(53,200,240,.35);">💬 PEOPLE CHAT</a>
 </body>
 </html>
