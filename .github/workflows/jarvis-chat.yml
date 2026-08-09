@@ -1,0 +1,27 @@
+name: Jarvis Chat-OPS
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  reply:
+    if: contains(github.event.comment.body, '@jarvis') && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Think and reply
+        run: python bot/reply.py
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # optional fallback brain
