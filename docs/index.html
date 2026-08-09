@@ -51,6 +51,28 @@ body::after{ /* scanline */
   box-shadow:0 0 14px rgba(53,200,240,.45);
 }  
 
+/* Chat Button */
+#chat-btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: "Orbitron";
+  font-size: .65rem;
+  letter-spacing: .2em;
+  cursor: pointer;
+  background: rgba(255,181,77,.1);
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 0 18px;
+  min-height: 38px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background .15s, color .15s;
+}
+#chat-btn:hover {
+  background: var(--amber);
+  color: #04101c;
+}
+
 header{
   display:flex; justify-content:space-between; align-items:baseline; gap:16px;
   padding:18px 28px; border-bottom:1px solid var(--line);
@@ -131,11 +153,14 @@ button:hover{background:var(--cyan); color:#04101c}
 
 <header>
   <h1>J.A.R.V.I.S.</h1>
-  <div class="meta">
-    CORE: <b>ONLINE</b> · UPLINK: <b>STABLE</b><br>
-    <span id="clock">--:--:--</span> UTC
+  <div style="display:flex; align-items:center; gap:24px;">
+    <a href="chat.html" id="chat-btn">💬 CHAT</a>
+    <div class="meta">
+      CORE: <b>ONLINE</b> · UPLINK: <b>STABLE</b><br>
+      <span id="clock">--:--:--</span> UTC
+    </div>
   </div>
-</header>
+</header> <!-- 👈 RIGHT HERE -->
 
 <main>
   <section class="panel">
