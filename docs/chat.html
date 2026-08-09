@@ -355,7 +355,7 @@ async function jarvisBrain(raw){
       const p=Object.values(d.query.pages)[0];
       return p.missing!==undefined?"Nothing on '"+topic+"' in my archives.":"📚 "+p.title+": "+p.extract.slice(0,350);
     }catch{ return "Archive uplink failed."; } }
-  /* LLM uplink fallback — uses Gemini key from Settings on the HUD page */
+    /* LLM uplink fallback — uses Gemini key from Settings on the HUD page */
   const S=JSON.parse(localStorage.getItem("jarvis.settings")||"{}");
   if(S.geminiKey){ try{
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${S.geminiKey}`;
@@ -367,10 +367,6 @@ async function jarvisBrain(raw){
        const d = await r.json();
        if(d.candidates && d.candidates[0]) return d.candidates[0].content.parts[0].text;
     }
-  }catch{} }
-        {role:"system",content:"You are JARVIS, a witty assistant in a group chat. Under 100 words."},
-        {role:"user",content:q}],max_tokens:300})});
-    if(r.ok) return (await r.json()).choices[0].message.content;
   }catch{} }
   return "I don't have a protocol for that — try '@jarvis help'.";
 }
