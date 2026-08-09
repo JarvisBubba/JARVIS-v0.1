@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>J.A.R.V.I.S. Local Chat</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #071c26, #02040a 60%);
+      color: #dff6ff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 20px 16px 10px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      letter-spacing: 3px;
+      color: #67e8f9;
+      text-shadow: 0 0 18px rgba(103, 232, 249, 0.35);
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: rgba(223, 246, 255, 0.65);
+    }
+
+    #chat {
+      flex: 1;
+      overflow: auto;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(103, 232, 249, 0.12);
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .user {
+      background: rgba(34, 211, 238, 0.12);
+      border-color: rgba(34, 211, 238, 0.22);
+    }
+
+    .jarvis {
+      background: rgba(148, 163, 184, 0.10);
+      border-color: rgba(148, 163, 184, 0.18);
+    }
+
+    .quick {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick button {
+      border: 1px solid rgba(103, 232, 249, 0.18);
+      background: rgba(103, 232, 249, 0.08);
+      color: #dff6ff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .quick button:hover {
+      background: rgba(103, 232, 249, 0.16);
+    }
+
+    form {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      border: 1px solid rgba(103, 232, 249, 0.20);
+      background: rgba(2, 6, 23, 0.70);
+      color: #dff6ff;
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: rgba(223, 246, 255, 0.40);
+    }
+
+    button.send {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 18px;
+      background: #22d3ee;
+      color: #062024;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.send:hover {
+      background: #67e8f9;
+    }
+
+    button.send:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>J.A.R.V.I.S.</h1>
+    <p>Local Chat Protocol</p>
+  </header>
+
+  <main id="chat" aria-live="polite"></main>
+
+  <section class="quick">
+    <button type="button" data-cmd="help">help</button>
+    <button type="button" data-cmd="time">time</button>
+    <button type="button" data-cmd="date">date</button>
+    <button type="button" data-cmd="status">status</button>
+    <button type="button" data-cmd="joke">joke</button>
+    <button type="button" data-cmd="quote">quote</button>
+    <button type="button" data-cmd="weather in Tokyo">weather in Tokyo</button>
+    <button type="button" data-cmd="calc (3+4)*2^3">calc</button>
+    <button type="button" data-cmd="flip a coin">flip a coin</button>
+    <button type="button" data-cmd="roll 2d6">roll 2d6</button>
+  </section>
+
+  <form id="chat-form">
+    <input
+      id="message-input"
+      type="text"
+      placeholder="Try: help, time, weather in London, calc 2+2"
+      autocomplete="off"
+    />
+    <button class="send" id="send-button" type="submit">Send</button>
+  </form>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("message-input");
+    const sendButton = document.getElementById("send-button");
+
+    function addMessage(role, text) {
+      const div = document.createElement("div");
+      div.className = "message " + role;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMessage(message) {
+      message = message.trim();
+
+      if (!message) {
+        return;
+      }
+
+      addMessage("user", message);
+
+      input.value = "";
+      sendButton.disabled = true;
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+
+        addMessage("jarvis", data.answer || "No response received, sir.");
+      } catch (error) {
+        addMessage("jarvis", "Local server error: " + error.message);
+      } finally {
+        sendButton.disabled = false;
+        input.focus();
+      }
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      await sendMessage(input.value);
+    });
+
+    document.querySelectorAll(".quick button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        sendMessage(button.dataset.cmd);
+      });
+    });
+
+    addMessage("jarvis", "Online. Try: help, time, joke, status, or weather in Tokyo.");
+    input.focus();
+  </script>
+</body>
+</html>
