@@ -1,0 +1,4 @@
+requests>=2.31
+SpeechRecognition>=3.10
+pyttsx3>=2.90
+# Linux only, for mic support: sudo apt install portaudio19-dev python3-pyaudio
