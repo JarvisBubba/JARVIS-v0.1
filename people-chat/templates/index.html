@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>People Chat</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #111827, #020617 60%);
+      color: #e5f7ff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 18px 16px 10px;
+      text-align: center;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    header h1 {
+      margin: 0;
+      letter-spacing: 2px;
+      color: #7dd3fc;
+      text-shadow: 0 0 18px rgba(125, 211, 252, 0.25);
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: rgba(229, 247, 255, 0.65);
+    }
+
+    .name-bar {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 14px 16px 0;
+    }
+
+    .name-bar input {
+      width: 100%;
+      border: 1px solid rgba(125, 211, 252, 0.18);
+      background: rgba(2, 6, 23, 0.70);
+      color: #e5f7ff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    #chat {
+      flex: 1;
+      overflow: auto;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(125, 211, 252, 0.12);
+      background: rgba(148, 163, 184, 0.08);
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+    }
+
+    .name {
+      color: #7dd3fc;
+      font-weight: bold;
+    }
+
+    .time {
+      color: rgba(229, 247, 255, 0.45);
+    }
+
+    .text {
+      white-space: pre-wrap;
+    }
+
+    form {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      border: 1px solid rgba(125, 211, 252, 0.20);
+      background: rgba(2, 6, 23, 0.70);
+      color: #e5f7ff;
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: rgba(229, 247, 255, 0.40);
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 18px;
+      background: #38bdf8;
+      color: #082032;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #7dd3fc;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>PEOPLE CHAT</h1>
+    <p>Local multi-user chat room</p>
+  </header>
+
+  <section class="name-bar">
+    <input
+      id="name-input"
+      type="text"
+      placeholder="Enter your name"
+      maxlength="24"
+      autocomplete="off"
+    />
+  </section>
+
+  <main id="chat" aria-live="polite"></main>
+
+  <form id="chat-form">
+    <input
+      id="text-input"
+      type="text"
+      placeholder="Type a message..."
+      maxlength="500"
+      autocomplete="off"
+    />
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("chat-form");
+    const textInput = document.getElementById("text-input");
+    const nameInput = document.getElementById("name-input");
+
+    nameInput.value = localStorage.getItem("chat-name") || "";
+
+    nameInput.addEventListener("input", function () {
+      localStorage.setItem("chat-name", nameInput.value);
+    });
+
+    let lastId = 0;
+
+    function addMessage(message) {
+      const row = document.createElement("div");
+      row.className = "message";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = message.name;
+
+      const time = document.createElement("span");
+      time.className = "time";
+      time.textContent = message.time;
+
+      const text = document.createElement("div");
+      text.className = "text";
+      text.textContent = message.text;
+
+      meta.appendChild(name);
+      meta.appendChild(time);
+
+      row.appendChild(meta);
+      row.appendChild(text);
+
+      chat.appendChild(row);
+    }
+
+    async function loadMessages() {
+      try {
+        const response = await fetch(`/messages?after=${lastId}`);
+        const data = await response.json();
+
+        // Server restarted, so clear old chat and reset.
+        if (data.lastId < lastId) {
+          chat.innerHTML = "";
+          lastId = 0;
+        }
+
+        if (data.messages && data.messages.length) {
+          for (const message of data.messages) {
+            addMessage(message);
+            lastId = Math.max(lastId, message.id);
+          }
+
+          chat.scrollTop = chat.scrollHeight;
+        }
+      } catch (error) {
+        // Silent fail while server is starting or temporarily unreachable.
+      }
+    }
+
+    async function sendMessage(event) {
+      event.preventDefault();
+
+      const text = textInput.value.trim();
+
+      if (!text) {
+        return;
+      }
+
+      const name = nameInput.value.trim() || "Guest";
+
+      try {
+        const response = await fetch("/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, text })
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          textInput.value = "";
+          await loadMessages();
+        } else {
+          alert(data.error || "Could not send message.");
+        }
+      } catch (error) {
+        alert("Server error: " + error.message);
+      }
+
+      textInput.focus();
+    }
+
+    form.addEventListener("submit", sendMessage);
+
+    loadMessages();
+    setInterval(loadMessages, 1200);
+
+    textInput.focus();
+  </script>
+</body>
+</html>
