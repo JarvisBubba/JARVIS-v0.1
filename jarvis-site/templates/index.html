@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>J.A.R.V.I.S.</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #071c26, #02040a 60%);
+      color: #dff6ff;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 700px;
+      padding: 40px 30px;
+      border-radius: 24px;
+      border: 1px solid rgba(103, 232, 249, 0.18);
+      background: rgba(2, 6, 23, 0.55);
+      box-shadow: 0 0 60px rgba(34, 211, 238, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 3rem;
+      letter-spacing: 4px;
+      color: #67e8f9;
+      text-shadow: 0 0 24px rgba(103, 232, 249, 0.35);
+    }
+
+    p {
+      color: rgba(223, 246, 255, 0.72);
+      line-height: 1.5;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 16px 28px;
+      border-radius: 16px;
+      background: #22d3ee;
+      color: #062024;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-decoration: none;
+      box-shadow: 0 0 30px rgba(34, 211, 238, 0.25);
+      transition: 0.2s ease;
+    }
+
+    .button:hover {
+      background: #67e8f9;
+      transform: translateY(-2px);
+    }
+
+    .note {
+      margin-top: 18px;
+      font-size: 0.92rem;
+      color: rgba(223, 246, 255, 0.45);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="panel">
+    <h1>J.A.R.V.I.S.</h1>
+    <p>Select a protocol.</p>
+
+    <a class="button" href="/chat">Open People Chat</a>
+
+    <div class="note">
+      This opens a shared local chat room where people can talk to each other.
+    </div>
+  </main>
+</body>
+</html>
